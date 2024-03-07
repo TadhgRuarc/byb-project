@@ -1,0 +1,393 @@
+"""
+My program 'task_manager' allows the regisitration of a user, checks if user 
+already exsist, creation, assignment and deletion of tasks as well as viewing 
+current user tasks and if they have outstanding tasks.
+
+"""
+
+
+# Notes:
+# 1. Use the following username and password to access the admin rights
+# username: admin
+# password: password
+
+# 2. Ensure you open the whole folder for this task in VS Code otherwise the
+# program will look in your root directory for the text files.
+
+
+
+
+# Imports to be used within the program
+# datetime allows for manipulating dates and times
+# os module provides a portable way of using operating system dependent functionality
+# secrets generates a random password
+# string module uses ASCII and digits for the password
+# haslib is used to hash the password before saiving it to the file
+# getpass is used to hide input from the terminal
+
+#=====importing libraries===========
+import os
+from datetime import datetime, date
+import secrets
+import string
+import hashlib
+from getpass import getpass
+
+# Constants to be used within my program
+DATETIME_STRING_FORMAT = "%Y-%m-%d"
+USER_DETAILS_FILEPATH = "users.txt"
+USER_TASKS_FILEPATH = "tasks.txt"
+PUNCTUATIONS = "@#$%&"
+DEFULT_PASSWORD_LENGTH = 10
+INVALID_LENGTH_MESSAGE = f'''
+Password length must between 8 and 16.
+Password length must have a number.
+Generating password with defualt length of {DEFULT_PASSWORD_LENGTH} characters'''
+
+
+# Functions to abtract main body of code to improve readability
+def generate_password(length = 10):
+    """
+    The 'generate_password' function generates a random password of the required
+    length, it consists of ASCII letters, digits and smy selected punctuation.
+    """
+    characters = string.ascii_letters + string.digits + PUNCTUATIONS
+    pwd = ''.join(secrets.choice(characters) for _ in range (length))
+    return pwd
+
+
+def hash_password(pwd):
+    """
+    Hash a password using SHA-256 algorithm, the hashed password is return as a
+    hexadecimal string
+    """
+    pwd_bytes = pwd.encode('utf-8')
+    hashed_pwd = hashlib.sha256(pwd_bytes).hexdigest()
+    return hashed_pwd
+
+
+def save_user(user_name, hashed_pwd):
+    """
+    Save user details to the user detail file
+    """
+    with open (USER_DETAILS_FILEPATH, "w", encoding="utf-8") as file:
+        user_data = []
+        for k in username_password:
+            user_data.append(f"{k};{username_password[k]}")
+        file.write(f"{user_name} {hashed_pwd}\n")
+
+
+def user_exists(user_name):
+    """
+    The "user_exists" function checks if the specified "user_name" already 
+    exists in the "USER_DETAILS_FILEPATH". If the program is run the first
+    time it will catch the "FileNotFoundError" and give error message. 
+    User.txt will be created after "user_password" is created with "save_user"
+    function.
+    
+    """
+    try:
+        with open(USER_DETAILS_FILEPATH, "r", encoding="utf-8") as file:
+            for line in file:
+                parts = line.split()
+                if parts[0] == user_name:
+                    return True
+    except FileNotFoundError as file_error:
+        print(f"{file_error.args[-1]}: {USER_DETAILS_FILEPATH}")
+        print(f"System will create file: {USER_DETAILS_FILEPATH}")
+    return False
+
+
+def authenticate_user(user_name, password):
+    """
+    The "authenticate_user" function checks if the specified password mathces 
+    the hash password stored in "USER_DETAILS_FILEPATH" It returns True 
+    if password is correct, False if not.
+    """
+    with open (USER_DETAILS_FILEPATH, "r", encoding="utf-8") as file:
+        for line in file:
+            parts = line.split()
+            if parts[0] == user_name:
+                hashed_password = parts[0]
+                if hashed_password == hash_password(password):
+                    return True
+                else:
+                    return False
+            return False
+
+
+def validaite_input(password_length):
+    """
+    The "validate_input" function changes the password to an
+    interger value and ensures that the password is between 8 and 16.
+    """
+    try:
+        password_length = int(password_length)
+        if password_length < 8 or password_length > 16:
+            raise ValueError("Password length must be between 8 / 16")
+        return password_length
+    except ValueError:
+        print(INVALID_LENGTH_MESSAGE)
+        return DEFULT_PASSWORD_LENGTH
+
+
+def register():
+    """
+    The function "register" promts user for a user name and password, if
+    username exists the funtion returns without registering the user, 
+    otheriwse it generates a password, validates password, encodes passsword 
+    and saves the user details. Message to say the user has been created is
+    printed to the terminal with the generated password.
+    """
+    user_name = input("Enter username: ")
+    if user_exists(user_name):
+        print("User already exists.")
+        return
+    password_length = input("Enter autogenerated password length (8-16)")
+    password_length = validaite_input(password_length)
+    password = generate_password(password_length)
+
+    hashed_password = hash_password(password)
+    save_user(user_name, hashed_password)
+    print("User created successfully.")
+    print(f"Your password is: {password}")
+
+
+def login():
+    """
+    The "login" funtion takes user input and checks if user exists using the 
+    "user_exists" function, checks if password matches using the "authenticate_user" 
+    function. If authentication is successful a message is printed to the 
+    terminal, else if authentication fails "incorrect password" 
+    is printed to the termianl. 
+    """
+    user_name = input("Enter username: ")
+    if not user_exists(user_name):
+        print("User does not exist.")
+        return
+
+    password = input("Enter password: ")
+    if not authenticate_user(user_name, password):
+        print("Incorrect password.")
+        return
+    print ("Login successful.")
+
+
+def add():
+    '''
+    Allow a user to add a new task to task.txt file
+    Prompt a user for the following: 
+        - A username of the person whom the task is assigned to,
+        - A title of a task,
+        - A description of the task and 
+        - the due date of the task.
+    '''
+    while True:
+        task_username = input("Name of person assigned to task: ")
+        if task_username not in authenticate_user(user_name):
+            print("User does not exist. Please enter a valid username")
+            
+        
+        task_title = input("Title of Task: ")
+        task_description = input("Description of Task: ")
+        
+    while True:
+        try:
+        task_due_date = input("Due date of task (YYYY-MM-DD): ")
+        due_date_time = datetime.strptime(task_due_date, DATETIME_STRING_FORMAT)
+        break
+
+    except ValueError:
+        print("Invalid datetime format. Please use the format specified")
+
+
+        # Then get the current date.
+        curr_date = date.today()
+        ''' Add the data to the file task.txt and
+            Include 'No' to indicate if the task is complete.'''
+        new_task = {
+            "username": task_username,
+            "title": task_title,
+            "description": task_description,
+            "due_date": due_date_time,
+            "assigned_date": curr_date,
+            "completed": False
+        }
+
+        task_list.append(new_task)
+        with open("tasks.txt", "w") as task_file:
+            task_list_to_write = []
+            for t in task_list:
+                str_attrs = [
+                    t['username'],
+                    t['title'],
+                    t['description'],
+                    t['due_date'].strftime(DATETIME_STRING_FORMAT),
+                    t['assigned_date'].strftime(DATETIME_STRING_FORMAT),
+                    "Yes" if t['completed'] else "No"
+                ]
+                task_list_to_write.append(";".join(str_attrs))
+            task_file.write("\n".join(task_list_to_write))
+        print("Task successfully added.")
+
+
+# def view_mine():
+#     '''
+#     Reads the task from task.txt file and prints to the console in the 
+#     format of Output 2 presented in the task pdf (i.e. includes spacing
+#     and labelling)
+#     '''
+#     for t in task_list:
+#         if t['username'] == curr_user:
+#             disp_str = f"Task: \t\t {t['title']}\n"
+#             disp_str += f"Assigned to: \t {t['username']}\n"
+#             disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+#             disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+#             disp_str += f"Task Description: \n {t['description']}\n"
+#             print(disp_str)
+
+
+
+# def veiw_all():
+#     '''
+#     Reads the task from task.txt file and prints to the console in the 
+#         format of Output 2 presented in the task pdf (i.e. includes spacing
+#         and labelling) 
+#     '''
+#     for t in task_list:
+#         disp_str = f"Task: \t\t {t['title']}\n"
+#         disp_str += f"Assigned to: \t {t['username']}\n"
+#         disp_str += f"Date Assigned: \t {t['assigned_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+#         disp_str += f"Due Date: \t {t['due_date'].strftime(DATETIME_STRING_FORMAT)}\n"
+#         disp_str += f"Task Description: \n {t['description']}\n"
+#         print(disp_str)
+
+
+# def display_statistics():
+#     '''
+#     If the user is an admin they can display statistics about number of users
+#     and tasks.
+#     '''
+#     num_users = len(username_password.keys())
+#     num_tasks = len(task_list)
+
+#     print("-----------------------------------")
+#     print(f"Number of users: \t\t {num_users}")
+#     print(f"Number of tasks: \t\t {num_tasks}")
+#     print("-----------------------------------")
+
+
+# def menu():
+#     """
+#     Function to display menu to user
+#     """
+#     print("""
+# r - Register
+# a - Add Task
+# va - View all Tasks
+# vm - View Personal Tasks
+# ds - Display statistics
+# _______________________
+# e - To Exit
+#          """)
+
+
+# def create_taskfile():
+#     """
+#     Create tasks.txt if it doesn't exist
+#     """
+#     if not os.path.exists(USER_TASKS_FILEPATH):
+#         with open("tasks.txt", "w") as default_file:
+#             pass
+    
+
+# def create_userfile():
+#     """
+#     Create user_tasks.txt if it doesnt exist 
+#     """
+#     if not os.path.exists(USER_DETAILS_FILEPATH):
+#         with open(USER_DETAILS_FILEPATH, "w", encoding="utf-8") as default_file:
+#             default_file.write("admin;password")
+            
+
+# # Create user_tasks.txt if it doesnt exist 
+# create_taskfile()
+
+# # Read in data from USER_TASKS_FILEPATH removes trailing newline and creates substring 
+# with open(USER_TASKS_FILEPATH, 'r', encoding="utf-8") as task_file:
+#         task_data = task_file.read().split("\n")
+#         task_data = [t for t in task_data if t != ""]
+
+
+# task_list = []
+
+# for task_str in task_data:
+#     curr_task = {}
+    
+#     # Split by semicolon and manually add each component
+#     task_components = t_str.split(";")
+#     curr_task['username'] = task_components[0]
+#     curr_task['title'] = task_components[1]
+#     curr_task['description'] = task_components[2]
+#     curr_task['due_date'] = datetime.strptime(task_components[3], DATETIME_STRING_FORMAT)
+#     curr_task['assigned_date'] = datetime.strptime(task_components[4], DATETIME_STRING_FORMAT)
+#     curr_task['completed'] = True if task_components[5] == "Yes" else False
+
+#     task_list.append(curr_task)
+
+
+
+
+
+# # ==== Main Code ====
+# # ==== Login Section ====
+# # This code reads usernames and password from the user.txt file to
+# # allow a user to login
+
+# # If no user.txt file, write one with a default account
+# create_userfile()
+
+# # Read in user_data
+# with open(USER_DETAILS_FILEPATH, 'r', encoding="utf-8") as user_file:
+#     user_data = user_file.read().split("\n")
+
+# # Convert to a dictionary
+# username_password = {}
+# for user in user_data:
+#     username, password = user.split(';')
+#     username_password[username] = password
+
+# # Request login information from user
+# logged_in = False
+# while not logged_in:
+#     print("LOGIN")
+#     login()
+
+# while True:
+#     # presenting the menu to the user and
+#     # making sure that the user input is converted to lower case.
+#     menu()
+#     choice = input("Enter input to proceed:").lower()
+
+#     if choice == "r":
+#         register()
+
+#     elif choice == "a":
+#         add()
+
+#     elif choice == "va":
+#         veiw_all()
+
+#     elif choice == "vm":
+#         view_mine()
+
+#     elif choice == "ds":
+#         display_statistics()
+
+#     elif choice == "e":
+#         print("Exiting program, goodbye.")
+#         break
+
+#     else:
+#         print("Invalid input - Please choose an option from the menu.")
+        
